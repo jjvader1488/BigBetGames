@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mines - Big Bet Casino</title>
+<style>
+body {
+  background: black;
+  color: lime;
+  font-family: 'Orbitron', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+h1 { font-size: 2em; margin-bottom: 10px; cursor: default; user-select:none; }
+#balanceDisplay, #roundBalance { margin: 5px; font-weight: bold; }
+#board { display: grid; grid-gap: 5px; margin-top: 20px; position: relative; }
+.cell {
+  width: 50px; height: 50px;
+  display: flex; justify-content: center; align-items: center;
+  background: #222; color: lime; font-weight: bold; font-size: 18px;
+  border-radius: 6px; cursor: pointer;
+}
+.cell.revealed { background: #555; cursor: default; }
+.cell.mine { background: #b71c1c; color: #fff; }
+#controls { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items:center; }
+button { padding: 6px 12px; border-radius: 6px; border: none; background: lime; color: black; cursor: pointer; }
+button:hover { background: #00ff99; }
+#dummyMsg { color: #00ff00; font-style: italic; margin-top: 5px; }
+#backBtn { margin-top: 15px; }
+
+/* Ladder */
+#multiplierLadder { margin-top: 12px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; max-width:420px; justify-content:center; }
+.ladder-step {
+  display:inline-flex; width:56px; height:28px; align-items:center; justify-content:center;
+  margin:2px; text-align:center; padding:4px 6px; border-radius:4px;
+  background:#333; color:lime; font-weight:bold; font-size:14px;
+  user-select:none;
+}
+.ladder-step.current { background: lime; color: #000; font-weight: 900; }
+
+/* payout display under ladder */
+#payoutPreview { margin-top: 6px; font-size:0.95em; color:#aaffaa; }
+
+/* popup - above grid */
+#revealPopup {
+  position: absolute;
+  z-index: 300;
+  padding: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 80px;
+  border-radius: 6px;
+  pointer-events: none;
+  display: none;
+}
+#revealPopup .outer {
+  border: 4px solid #000;
+  border-radius: 6px;
+  padding: 4px;
+}
+#revealPopup .inner {
+  border: 3px solid lime;
+  border-radius: 4px;
+  padding: 6px 10px;
+  background: #000;
+  display:flex; align-items:center; gap:8px; color:lime;
+  animation: flash 0.35s linear infinite;
+}
+@keyframes flash {
+  0% { border-color: lime; box-shadow: 0 0 0 rgba(0,255,150,0.8); }
+  50% { border-color: yellow; box-shadow: 0 0 14px rgba(255,255,0,0.9); }
+  100% { border-color: lime; box-shadow: 0 0 0 rgba(0,255,150,0.8); }
+}
+
+/* admin modal */
+#adminModal {
+  position: fixed; inset: 0; display: none; align-items:center; justify-content:center; z-index:400;
+  background: rgba(0,0,0,0.6);
+}
+#adminModal .panel {
+  background: #000; border: 2px solid lime; padding:16px; border-radius:8px; color:lime; width:340px;
+}
+input[type="number"], input[type="text"] { padding:6px; border-radius:6px; border:none; }
+.small { font-size:0.85em; color:#aaffaa; }
+
+#seedDisplay { margin-top:8px; font-size:0.9em; color:#aaffaa; }
+
+/* Footer buttons */
+#footerBtns { margin-top:30px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.footerBtn { padding:8px 16px; border-radius:6px; border:none; background:lime; color:black; cursor:pointer; }
+.footerBtn:hover { background:#00ff99; }
+</style>
+</head>
+<body>
+
+<h1 id="pageTitle">Mines</h1>
+
+<div id="balanceDisplay">Gems: 0.00</div>
+<div id="roundBalance">Round: 0.00</div>
+
+<div id="controls">
+  <label>Mines:
+    <input id="minesCount" type="number" value="3" min="1" max="24">
+  </label>
+  <label>Wager:
+    <input id="wagerInput" type="number" value="1" min="0" step="0.01">
+  </label>
+  <button id="newGame">Place Bet</button>
+  <button id="cashOut">Cash Out</button>
+  <button id="showSeed">Show Seed</button>
+</div>
+
+<div id="dummyMsg">Place 0 gems to play dummy bet</div>
+
+<!-- ladder + preview payout -->
+<div id="multiplierLadder" aria-hidden="false"></div>
+<div id="payoutPreview">Payout if you cashout at this level: -</div>
+<div id="seedDisplay">Seed: -</div>
+
+<!-- popup above grid -->
+<div id="revealPopup">
+  <div class="outer">
+    <div class="inner"><div id="revealText">Revealed: -</div></div>
+  </div>
+</div>
+
+<!-- Grid -->
+<div id="board" aria-label="mines board" role="grid"></div>
+
+<button id="backBtn">Back to Home</button>
+
+<!-- admin modal -->
+<div id="adminModal">
+  <div class="panel">
+    <h3 style="margin-top:0;color:lime">ADMIN</h3>
+    <div class="small">Set gems:</div>
+    <input id="adminGems" type="number" min="0" step="0.01" />
+    <button id="adminSetGems">Set</button>
+    <div style="height:8px"></div>
+    <div class="small">Force seed:</div>
+    <input id="adminSeed" type="text" placeholder="seed string"/>
+    <button id="adminSetSeed">Set</button>
+    <div style="height:8px"></div>
+    <button id="adminRevealBombs">Reveal bombs</button>
+    <button id="adminHideBombs">Hide bombs</button>
+    <div style="height:8px"></div>
+    <button id="adminClose">Close</button>
+  </div>
+</div>
+
+<!-- Footer buttons -->
+<div id="footerBtns">
+  <button class="footerBtn" id="supportBtn">Support</button>
+  <button class="footerBtn" id="faqBtn">FAQ</button>
+</div>
+
+<!-- Sounds -->
+<audio id="sfxClick" src="../Sounds/click.mp3" preload="auto"></audio>
+<audio id="sfxBomb" src="../Sounds/bomb.mp3" preload="auto"></audio>
+<audio id="sfxCash" src="../Sounds/cashout.mp3" preload="auto"></audio>
+
+<script src="script.js"></script>
+<script>
+// Footer support / FAQ
+document.getElementById('supportBtn').addEventListener('click', () => window.location.href='../support.html');
+document.getElementById('faqBtn').addEventListener('click', () => window.location.href='../faq.html');
+</script>
+</body>
+</html>

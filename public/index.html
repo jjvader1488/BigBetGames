@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big Bet Games</title>
+<style>
+body {
+  background: black;
+  color: lime;
+  font-family: 'Orbitron', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+  min-height: 100vh;
+}
+h1 { margin-bottom: 20px; font-size: 2em; }
+#profile { margin-bottom: 20px; text-align: center; }
+.gbutton {
+  background: lime; color: black;
+  border: none; padding: 10px 20px;
+  border-radius: 8px; cursor: pointer;
+  font-size: 1em; margin: 5px;
+}
+.gbutton:hover { background: #00ff99; }
+#gemsDisplay { margin-bottom: 20px; font-weight: bold; font-size: 1.2em; }
+#minesBtn { margin-top: 10px; }
+
+/* Deposit / Withdraw under logo */
+#depositBtn { background:white; color:lime; border:none; padding:8px 16px; border-radius:6px; margin:4px; cursor:pointer; }
+#depositBtn:hover { background:#eee; }
+#withdrawBtn { background:lime; color:white; border:none; padding:8px 16px; border-radius:6px; margin:4px; cursor:pointer; }
+#withdrawBtn:hover { background:#00ff99; }
+
+/* Footer buttons */
+#footerBtns { margin-top:30px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.footerBtn { padding:8px 16px; border-radius:6px; border:none; background:lime; color:black; cursor:pointer; }
+.footerBtn:hover { background:#00ff99; }
+
+/* Promo code */
+#promoSection { margin-top:15px; display:flex; gap:8px; align-items:center; }
+#promoInput { padding:6px; border-radius:6px; border:none; }
+#promoRedeem { padding:6px 12px; border-radius:6px; border:none; background:lime; color:black; cursor:pointer; }
+#promoRedeem:hover { background:#00ff99; }
+</style>
+</head>
+<body>
+
+<h1>BigBetGames.Org</h1>
+
+<!-- Deposit / Withdraw under logo -->
+<div>
+  <button id="depositBtn">Deposit</button>
+  <button id="withdrawBtn">Withdraw</button>
+</div>
+
+<div id="profile"></div>
+<div id="gemsDisplay">Gems: 0.00 💎</div>
+
+<button id="minesBtn" class="gbutton">Play Mines</button>
+
+<!-- Promo Code -->
+<div id="promoSection">
+  <input id="promoInput" type="text" placeholder="Enter promo code"/>
+  <button id="promoRedeem">Redeem</button>
+</div>
+
+<!-- Footer buttons -->
+<div id="footerBtns">
+  <button class="footerBtn" id="supportBtn">Support</button>
+  <button class="footerBtn" id="faqBtn">FAQ</button>
+</div>
+
+<!-- Google Sign-In -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<div id="g_id_onload"
+     data-client_id="866960260335-81nb4t4v8o8fv1p2p8v9a35s6cm6ahfl.apps.googleusercontent.com"
+     data-login_uri=""
+     data-auto_prompt="false">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+
+<script>
+let gems = parseFloat(localStorage.getItem('gems')||0);
+function updateGemsDisplay() {
+  gems = parseFloat(localStorage.getItem('gems')||0);
+  document.getElementById('gemsDisplay').textContent = `Gems: ${gems.toFixed(2)} 💎`;
+}
+window.addEventListener('load', updateGemsDisplay);
+window.addEventListener('focus', updateGemsDisplay);
+
+// Play Mines
+document.getElementById('minesBtn').addEventListener('click', () => {
+  window.location.href = 'mines/index.html';
+});
+
+// Deposit / Withdraw (dummy)
+document.getElementById('depositBtn').addEventListener('click', () => alert('Deposit page coming soon.'));
+document.getElementById('withdrawBtn').addEventListener('click', () => alert('Withdraw page coming soon.'));
+
+// Footer support / FAQ
+document.getElementById('supportBtn').addEventListener('click', () => window.location.href='support.html');
+document.getElementById('faqBtn').addEventListener('click', () => window.location.href='faq.html');
+
+// Promo code
+let promoUsed = localStorage.getItem('promo_FREE5') === 'true';
+document.getElementById('promoRedeem').addEventListener('click', () => {
+  const code = document.getElementById('promoInput').value.trim().toUpperCase();
+  if(code==='FREE5'){
+    if(promoUsed) alert('Promo code already redeemed.');
+    else{
+      gems += 5;
+      localStorage.setItem('gems', gems);
+      localStorage.setItem('promo_FREE5','true');
+      updateGemsDisplay();
+      promoUsed = true;
+      alert('Promo redeemed! 5 free gems added.');
+    }
+  } else alert('Invalid promo code.');
+});
+</script>
+</body>
+</html>
